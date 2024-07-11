@@ -38,3 +38,11 @@ export const api = apiBuilder(routes)
 ```
 
 That's all, others should be able to use your defined routes, with your specific inputs and outputs fully typed!
+
+```typescript
+const closeTicket = api.tickets.closeTicket.useMutation({
+    onSuccess: () => {
+      //something
+    },
+  })
+```
