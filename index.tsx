@@ -1,4 +1,4 @@
-import { UseInfiniteQueryOptions } from "@tanstack/react-query";
+import { QueryKey, UseInfiniteQueryOptions } from "@tanstack/react-query";
 import { UndefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
 import { DefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
 import {
@@ -18,14 +18,13 @@ type PartialUndefinedInitialDataOptions<T, E> = Partial<
 export type ProcedureType = "query" | "mutation" | "infinite";
 export type TBuildOutput<TInferedOutput, TOutput> =
   TInferedOutput extends TOutput ? TOutput : TInferedOutput;
-
 /**
  * A procedure is the start of a query/mutation, a wrapper that allows us to declare a query/mutation
  * Additionally, if the schema has an input, this is validated, so we make sure that the input is valid, both for
  * mutations and queries
  */
 export class Procedure<TInput, TOutput = unknown, TError = unknown> {
-  public key: string[] = [Math.random().toString()];
+  public key: QueryKey = [Math.random().toString()];
   public type: ProcedureType | null = null;
   public schemeInput: z.ZodType<TInput> | undefined;
   public schemeOutput: z.ZodType<TOutput> | undefined;
@@ -45,16 +44,17 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
       };
       input?: TInput;
     }) => Promise<TInferedOutput>,
-    queryKey?: string
+    queryKey: QueryKey
   ) => {
     this.type = "query";
+    this.key = [queryKey];
     const useDynamicQuery = (
       input: TInput,
       options?: PartialUndefinedInitialDataOptions<TInferedOutput, Error>
     ) => {
       const initialOptions: UndefinedInitialDataOptions<TInferedOutput, Error> =
         {
-          queryKey: options?.queryKey ? [options.queryKey] : [queryKey],
+          queryKey: options?.queryKey ? [queryKey, options.queryKey] : [queryKey],
           queryFn: async () => {
             try {
               const response = func({
@@ -77,6 +77,10 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
             }
           },
         };
+        if (options?.queryKey) {
+        this.key = [queryKey, options?.queryKey];
+        options.queryKey = this.key;
+      }
       //Enforce scheme if it exists by default
       if (this.schemeInput) {
         this.schemeInput.parse(input);
@@ -91,7 +95,6 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
       ctx: this,
     };
   };
-
   infiniteQuery = <
     TInferedOutput extends TOutput
     // nextPageParams: Record<string, unknown>
@@ -104,15 +107,16 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
       input?: TInput;
       ctx: Procedure<TInput, TOutput, TError> & { schemeOutput: TOutput };
     }) => Promise<TInferedOutput>,
-    queryKey?: string
+    queryKey: QueryKey
   ) => {
     this.type = "infinite";
+    this.key = [queryKey];
     const useDynamicInfiniteQuery = (
       input: TInput,
       options: Omit<
         UndefinedInitialDataInfiniteOptions<TInferedOutput, TError>,
         "queryKey"
-      > & { queryKey?: string }
+      > & { queryKey?: QueryKey }
     ) => {
       const initialOptions: UndefinedInitialDataInfiniteOptions<
         TInferedOutput,
@@ -132,12 +136,16 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
           }
         },
         ...options,
-        queryKey: options?.queryKey ? [options.queryKey] : [queryKey],
+        // queryKey: options?.queryKey ? [options.queryKey] : [queryKey],
+        queryKey: options?.queryKey ? [queryKey, options.queryKey] : [queryKey],
       };
-
       //Enforce scheme if it exists
       if (this.schemeInput) {
         this.schemeInput.parse(input);
+      }
+      if (options?.queryKey) {
+        this.key = [queryKey, options?.queryKey];
+        options.queryKey = this.key;
       }
       return useInfiniteQueryTanstack<TInferedOutput, TError>({
         ...initialOptions,
@@ -155,12 +163,10 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
    */
   mutation = (
     func: ({ input }: { input?: TInput }) => Promise<TOutput>,
-    mutationKey?: string
+    mutationKey: QueryKey
   ) => {
-    if (mutationKey) {
-      this.key = [mutationKey];
-    }
     this.type = "mutation";
+    this.key = [mutationKey];
     const useDynamicMutation = (
       options?: UseMutationOptions<
         TOutput,
@@ -173,9 +179,7 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
         TError,
         { input: TInput | undefined }
       > = {
-        mutationKey: options?.mutationKey
-          ? [options.mutationKey]
-          : [mutationKey],
+        mutationKey: options?.mutationKey ? [mutationKey, options.mutationKey] : [mutationKey],
         mutationFn: ({ input }: { input: TInput | undefined }) => {
           if (this.schemeInput) {
             this.schemeInput.parse(input);
@@ -183,6 +187,10 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
           return func({ input });
         },
       };
+      if (options?.mutationKey) {
+        this.key = [mutationKey, options.mutationKey];
+        options.mutationKey = this.key;
+      }
       return useMutationTanstack<
         TOutput,
         TError,
@@ -229,7 +237,6 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
     if (options?.verifyOutput) {
       this.verifyOutput = options.verifyOutput;
     }
-
     return this as Procedure<TInput, O extends TOutput ? O : TOutput>;
   };
 }
@@ -252,13 +259,11 @@ export type ReturnUseUtils<ResultFlow> = {
       : never;
   };
 };
-
 export class Utils<T extends Record<string, Record<string, any>>> {
   private val: T;
   constructor(val: T) {
     this.val = val;
   }
-
   /**
    * TODO: Fix type casting with generics or infer, idk
    */
@@ -275,14 +280,16 @@ export class Utils<T extends Record<string, Record<string, any>>> {
           ...prev,
           [key2]: {
             invalidate: () => {
-              return queryClient.invalidateQueries({
+              queryClient.invalidateQueries({
                 queryKey: value2.ctx.key,
               });
+              return value2.ctx.key;
             },
             refetch: () => {
-              return queryClient.refetchQueries({
+              queryClient.refetchQueries({
                 queryKey: value2.ctx.key,
               });
+              return value2.ctx.key;
             },
           },
         };
