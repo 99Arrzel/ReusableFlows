@@ -1,3 +1,6 @@
+import { UseInfiniteQueryOptions } from "@tanstack/react-query";
+import { UndefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
+import { DefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
 import {
   UndefinedInitialDataOptions,
   useQuery as useQueryTanstack,
@@ -89,44 +92,54 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
     };
   };
 
-  infiniteQuery = (
-    fns: {
-      queryFn: ({ input }: { input?: TInput }) => Promise<TOutput>;
-      getNextPageParam: (
-        lastPage: TOutput,
-        allPages: TOutput[]
-      ) => TInput | undefined;
-      getPreviousPageParam: (
-        firstPage: TOutput,
-        allPages: TOutput[]
-      ) => TInput | undefined;
-      initialPageParam: TInput;
-      initialData?: InfiniteData<TOutput>;
-    },
+  infiniteQuery = <
+    TInferedOutput extends TOutput
+    // nextPageParams: Record<string, unknown>
+    // previousPageParams: Record<string, unknown>
+  >(
+    queryFn: ({
+      input,
+      ctx,
+    }: {
+      input?: TInput;
+      ctx: Procedure<TInput, TOutput, TError> & { schemeOutput: TOutput };
+    }) => Promise<TInferedOutput>,
     queryKey?: string
   ) => {
     this.type = "infinite";
     const useDynamicInfiniteQuery = (
       input: TInput,
-      options?: PartialUndefinedInitialDataOptions<TOutput, TError>
+      options: Omit<
+        UndefinedInitialDataInfiniteOptions<TInferedOutput, TError>,
+        "queryKey"
+      > & { queryKey?: string }
     ) => {
-      const initialOptions = {
-        queryKey: options?.queryKey ? [options.queryKey] : [queryKey],
-        ...fns,
+      const initialOptions: UndefinedInitialDataInfiniteOptions<
+        TInferedOutput,
+        TError
+      > = {
         queryFn: async () => {
           try {
-            return fns?.queryFn({ input });
+            return queryFn({
+              input,
+              ctx: this as unknown as Procedure<TInput, TOutput, TError> & {
+                schemeOutput: TOutput;
+              },
+            });
           } catch (error) {
             console.error(error);
             return Promise.reject(error);
           }
         },
+        ...options,
+        queryKey: options?.queryKey ? [options.queryKey] : [queryKey],
       };
+
       //Enforce scheme if it exists
       if (this.schemeInput) {
         this.schemeInput.parse(input);
       }
-      return useInfiniteQueryTanstack<TOutput, TError>({
+      return useInfiniteQueryTanstack<TInferedOutput, TError>({
         ...initialOptions,
       });
     };
@@ -287,4 +300,3 @@ export const apiBuilder = <FuncionList extends Record<string, any>>(
 ) => {
   return { utils: new Utils(val), ...val };
 };
-
