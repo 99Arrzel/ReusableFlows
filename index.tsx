@@ -29,6 +29,27 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
   public schemeInput: z.ZodType<TInput> | undefined;
   public schemeOutput: z.ZodType<TOutput> | undefined;
   public verifyOutput = false;
+
+  isValidSchema = (schema: z.ZodType<unknown>, data: unknown) => {
+    const validate = schema.safeParse(data);
+    if (validate.error) {
+      console.error(
+        "Error validating schema, input/output does not match the schema:",
+        this.key,
+        data,
+      );
+      console.error(validate.error);
+      return {
+        ok: false,
+        res: validate,
+      };
+    }
+    return {
+      ok: true,
+      res: validate,
+    };
+  };
+
   /**
    * Makes a query call using useQuery
    * @param func Function to call
@@ -66,14 +87,12 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
                 },
               });
               if (this.verifyOutput && this.schemeOutput) {
-                const validate = this.schemeOutput.safeParse(response);
-                if (validate.error) {
-                  console.error(
-                    "Error validating schema output, output of the query function does not match the schema:",
-                    response
-                  );
-                  console.error(validate.error);
-                  return Promise.reject(validate);
+                const isValid = this.isValidSchema(
+                  this.schemeOutput,
+                  await response
+                );
+                if (!isValid.ok) {
+                  return Promise.reject(isValid.res.error);
                 }
               }
               return response as TInferedOutput;
@@ -147,7 +166,11 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
       };
       //Enforce scheme if it exists
       if (this.schemeInput) {
-        this.schemeInput.parse(input);
+        // this.schemeInput.parse(input);
+        const isValid = this.isValidSchema(this.schemeInput, input);
+        if (!isValid.ok) {
+          return Promise.reject(isValid.res.error);
+        }
       }
       if (options?.queryKey) {
         this.key = [queryKey, options?.queryKey];
