@@ -54,7 +54,9 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
     ) => {
       const initialOptions: UndefinedInitialDataOptions<TInferedOutput, Error> =
         {
-          queryKey: options?.queryKey ? [queryKey, options.queryKey] : [queryKey],
+          queryKey: options?.queryKey
+            ? [queryKey, options.queryKey]
+            : [queryKey],
           queryFn: async () => {
             try {
               const response = func({
@@ -66,7 +68,11 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
               if (this.verifyOutput && this.schemeOutput) {
                 const validate = this.schemeOutput.safeParse(response);
                 if (validate.error) {
-                  console.error("Error validating output", validate.error);
+                  console.error(
+                    "Error validating schema output, output of the query function does not match the schema:",
+                    response
+                  );
+                  console.error(validate.error);
                   return Promise.reject(validate);
                 }
               }
@@ -77,7 +83,7 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
             }
           },
         };
-        if (options?.queryKey) {
+      if (options?.queryKey) {
         this.key = [queryKey, options?.queryKey];
         options.queryKey = this.key;
       }
@@ -179,7 +185,9 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
         TError,
         { input: TInput | undefined }
       > = {
-        mutationKey: options?.mutationKey ? [mutationKey, options.mutationKey] : [mutationKey],
+        mutationKey: options?.mutationKey
+          ? [mutationKey, options.mutationKey]
+          : [mutationKey],
         mutationFn: ({ input }: { input: TInput | undefined }) => {
           if (this.schemeInput) {
             this.schemeInput.parse(input);
@@ -244,7 +252,9 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
  * Creates a flow to communicate with the backend through a reusable procedure
  */
 export class Flow {
-  static procedure = new Procedure();
+  static get procedure() {
+    return new Procedure();
+  }
 }
 export type ReturnUseUtils<ResultFlow> = {
   [K in keyof ResultFlow]: {
