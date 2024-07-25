@@ -36,7 +36,7 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
       console.error(
         "Error validating schema, input/output does not match the schema:",
         this.key,
-        data,
+        data
       );
       console.error(validate.error);
       return {
@@ -213,7 +213,11 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
           : [mutationKey],
         mutationFn: ({ input }: { input: TInput | undefined }) => {
           if (this.schemeInput) {
-            this.schemeInput.parse(input);
+            const isValid = this.isValidSchema(this.schemeInput, input);
+            if (!isValid.ok) {
+              return Promise.reject(isValid.res.error);
+            }
+          
           }
           return func({ input });
         },

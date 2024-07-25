@@ -1,6 +1,6 @@
 {
   "name": "reusableflows",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A wrapper for your useQuery calls to centralize them and type them all",
   "main": "index.tsx",
   "keywords": [
