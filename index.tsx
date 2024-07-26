@@ -32,13 +32,15 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
 
   isValidSchema = (schema: z.ZodType<unknown>, data: unknown) => {
     const validate = schema.safeParse(data);
+
     if (validate.error) {
       console.error(
         "Error validating schema, input/output does not match the schema:",
         this.key,
         data
       );
-      console.error(validate.error);
+      console.error("Error in key", this.key);
+      console.error("Error Data", validate);
       return {
         ok: false,
         res: validate,
@@ -217,7 +219,6 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
             if (!isValid.ok) {
               return Promise.reject(isValid.res.error);
             }
-          
           }
           return func({ input });
         },
