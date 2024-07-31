@@ -291,8 +291,10 @@ export type ReturnUseUtils<ResultFlow> = {
       ctx: any;
     }
       ? {
-          invalidate: () => Promise<void>;
-          refetch: () => Promise<void>;
+          //Returns the invalidated key
+          invalidate: () => Promise<string>;
+          refetch: () => Promise<string>;
+          abort: () => Promise<string>;
         }
       : never;
   };
@@ -325,6 +327,12 @@ export class Utils<T extends Record<string, Record<string, any>>> {
             },
             refetch: () => {
               queryClient.refetchQueries({
+                queryKey: value2.ctx.key,
+              });
+              return value2.ctx.key;
+            },
+            abort: () => {
+              queryClient.cancelQueries({
                 queryKey: value2.ctx.key,
               });
               return value2.ctx.key;
