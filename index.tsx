@@ -1,14 +1,14 @@
-import { QueryKey, UseInfiniteQueryOptions } from "@tanstack/react-query";
-import { UndefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
-import { DefinedInitialDataInfiniteOptions } from "@tanstack/react-query";
 import {
+  QueryClient,
+  QueryKey,
+  QueryClientProvider,
   UndefinedInitialDataOptions,
   useQuery as useQueryTanstack,
   useMutation as useMutationTanstack,
   useInfiniteQuery as useInfiniteQueryTanstack,
   UseMutationOptions,
-  InfiniteData,
   useQueryClient,
+  UndefinedInitialDataInfiniteOptions,
 } from "@tanstack/react-query";
 import { z } from "zod";
 export type TRequestType = "get" | "post" | "put" | "delete";
@@ -353,3 +353,11 @@ export const apiBuilder = <FuncionList extends Record<string, any>>(
 ) => {
   return { utils: new Utils(val), ...val };
 };
+/**
+ * As discussed in https://github.com/TanStack/query/issues/7927
+ * This needs to use the same exact version of Tanstack Query than your app
+ * So in order to make it work, you should have to setup the context from this dependency
+ *
+ */
+export const QueryClientFlow = QueryClient;
+export const QueryClientProviderFlow = QueryClientProvider;

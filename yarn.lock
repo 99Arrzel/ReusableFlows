@@ -2,25 +2,17 @@
 # yarn lockfile v1
 
 
-"@tanstack/query-core@5.51.9":
-  version "5.51.9"
-  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.51.9.tgz#eb2e02c715068d5664680b773e39eb44db6b48d8"
-  integrity sha512-HsAwaY5J19MD18ykZDS3aVVh+bAt0i7m6uQlFC2b77DLV9djo+xEN7MWQAQQTR8IM+7r/zbozTQ7P0xr0bHuew==
+"@tanstack/query-core@5.52.0":
+  version "5.52.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.52.0.tgz#44070b2d6eb58c3a5ce2788471d842e932294a87"
+  integrity sha512-U1DOEgltjUwalN6uWYTewSnA14b+tE7lSylOiASKCAO61ENJeCq9VVD/TXHA6O5u9+6v5+UgGYBSccTKDoyMqw==
 
-"@tanstack/react-query@^5.51.1":
-  version "5.51.11"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.51.11.tgz#8ab2cf6a4baa7a99b5682addf31328525f43242c"
-  integrity sha512-4Kq2x0XpDlpvSnaLG+8pHNH60zEc3mBvb3B2tOMDjcPCi/o+Du3p/9qpPLwJOTliVxxPJAP27fuIhLrsRdCr7A==
+"@tanstack/react-query@^5.52.0":
+  version "5.52.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.52.0.tgz#671478798f1873983807cf6f62b140c817b3cc9f"
+  integrity sha512-T8tLZdPEopSD3A1EBZ/sq7WkI76pKLKKiT82F486K8wf26EPgYCdeiSnJfuayssdQjWwLQMQVl/ROUBNmlWgCQ==
   dependencies:
-    "@tanstack/query-core" "5.51.9"
-
-reusableflows@^0.0.9:
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/reusableflows/-/reusableflows-0.0.9.tgz#ebea0d3f9e1bafb93cdbb8692df111349c778778"
-  integrity sha512-tkOl2227E6c+mak3H18Zs/8LCMLGjO9E1tTAut/wkDpJcnF9pHNQUwbyyZXGZg6oUcoJwrKfheaEcx/KqtGdWg==
-  dependencies:
-    "@tanstack/react-query" "^5.51.1"
-    zod "^3.23.8"
+    "@tanstack/query-core" "5.52.0"
 
 zod@^3.23.8:
   version "3.23.8"
