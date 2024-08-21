@@ -6,7 +6,6 @@ It's influenced by TRPC so the usage is similar
 
 Just a drop in and use, but you have to configure tanstack working. Zod library is used for schema validations.
 
-
 ```typescript
 //First declare an object containing procedures
  const tickets = {
@@ -46,3 +45,5 @@ const closeTicket = api.tickets.closeTicket.useMutation({
     },
   })
 ```
+
+If you encounter problems about `No QueryClient set, use QueryClientProvider to set one` you must use the exported `QueryClient` and `QueryProvider` from the library.
