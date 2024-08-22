@@ -10,6 +10,8 @@ import {
   useQueryClient,
   UndefinedInitialDataInfiniteOptions,
 } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 import { z } from "zod";
 export type TRequestType = "get" | "post" | "put" | "delete";
 type PartialUndefinedInitialDataOptions<T, E> = Partial<
@@ -361,3 +363,4 @@ export const apiBuilder = <FuncionList extends Record<string, any>>(
  */
 export const QueryClientFlow = QueryClient;
 export const QueryClientProviderFlow = QueryClientProvider;
+export const DevTools = ReactQueryDevtools;
