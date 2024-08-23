@@ -31,6 +31,7 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
   public schemeInput: z.ZodType<TInput> | undefined;
   public schemeOutput: z.ZodType<TOutput> | undefined;
   public verifyOutput = false;
+  public verifyInput = true;
 
   isValidSchema = (schema: z.ZodType<unknown>, data: unknown) => {
     const validate = schema.safeParse(data);
@@ -83,36 +84,23 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
             ? [queryKey, options.queryKey]
             : [queryKey],
           queryFn: async () => {
-            try {
-              const response = func({
-                input,
-                ctx: this as unknown as Procedure<TInput, TOutput, TError> & {
-                  schemeOutput: TOutput;
-                },
-              });
-              if (this.verifyOutput && this.schemeOutput) {
-                const isValid = this.isValidSchema(
-                  this.schemeOutput,
-                  await response
-                );
-                if (!isValid.ok) {
-                  return Promise.reject(isValid.res.error);
-                }
+            if (this.schemeInput) {
+              const isValid = this.isValidSchema(this.schemeInput, input);
+              if (!isValid.ok) {
+                return Promise.reject(isValid.res.error);
               }
-              return response as TInferedOutput;
-            } catch (error) {
-              console.error(error);
-              return Promise.reject(error);
             }
+            return func({
+              input,
+              ctx: this as unknown as Procedure<TInput, TOutput, TError> & {
+                schemeOutput: TOutput;
+              },
+            });
           },
         };
       if (options?.queryKey) {
         this.key = [queryKey, options?.queryKey];
         options.queryKey = this.key;
-      }
-      //Enforce scheme if it exists by default
-      if (this.schemeInput) {
-        this.schemeInput.parse(input);
       }
       return useQueryTanstack<TInferedOutput, Error>({
         ...initialOptions,
@@ -248,19 +236,27 @@ export class Procedure<TInput, TOutput = unknown, TError = unknown> {
   }
   /**
    * Declares an input as a scheme for the flow
-   * @param val Another Zod Scheme
+   * Options verifyInput defaults to true.
    */
-  input = <K,>(val: z.ZodType<K extends TInput ? K : TInput>) => {
+  input = <K,>(
+    val: z.ZodType<K extends TInput ? K : TInput>,
+    options?: { verifyInput?: boolean }
+  ) => {
     if (val === undefined) {
       console.warn("Input set but empty");
     }
-    this.schemeInput = val as unknown as z.ZodType<TInput>;
+    if (val) {
+      this.schemeInput = val as unknown as z.ZodType<TInput>;
+    }
+    if (options?.verifyInput) {
+      this.verifyInput = options.verifyInput;
+    }
     return this as Procedure<K extends TInput ? K : TInput, TOutput>;
   };
+
   /**
    * Declares an output scheme for the flow
-   * @param val
-   * @returns
+   * Options verifyOutput defaults to false.
    */
   output = <O,>(
     val: z.ZodType<O extends TOutput ? O : TOutput>,
